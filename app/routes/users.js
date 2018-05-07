@@ -1,6 +1,7 @@
 import express from 'express';
 
 import users from 'app/models/users';
+import Posts from 'app/models/posts';
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.post('/update', (req,res) => {
 
 app.post('/delete', (req,res) => {
   const id = req.body.id;
+  Posts.deleteMany({userId:id}).then(result => res.send(result));
   users.findByIdAndRemove(id).exec().then(result => res.send(result));
 })
 

@@ -2,7 +2,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 
-//import users from './models/users';
 import routes from './routes';
 
 const app = express();
@@ -23,28 +22,6 @@ app.use(routes);
 app.get('/', function(req, res) {
   res.send('Hello World!!');
 });
-
-// app.get('/getUsers', function(req, res) {
-
-//   users.find().then(function(doc){
-//     res.send(doc);
-//   });
-
-// });
-
-// app.post('/insertUser', function(req,res) {
-
-//   const user = {
-//     email: req.body.email,
-//     password: req.body.password
-//   };
-
-//   const data = new users(user);
-//   data.save();
-//   console.log('user email & password', data.email, data.password);
-
-//   res.send(data);
-// });
 
 const server = app.listen(8000, () => {
 	var host = server.address().address;

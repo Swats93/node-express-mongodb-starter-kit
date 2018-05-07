@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const postSchema = new mongoose.Schema({
 	userId: {type: String},
+	title: {type: String},
 	content: {type: String},
 	createdAt: { type: Date, default: Date.now },
 	updatedAt: { type: Date, default: Date.now },
