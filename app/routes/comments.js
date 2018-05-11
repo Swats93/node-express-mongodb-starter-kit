@@ -15,7 +15,10 @@ app.post('/', (req,res) => {
   };
   const data = new Comments(post);
   data.save()
-  .then(data => res.send(data));
+  .then(data => res.send(data))
+  .catch((errors) => {
+    res.send(errors);
+  });
 });
 
 
@@ -33,9 +36,8 @@ app.get('/:id', (req,res) => {
 });
 
 
-app.post('/update', (req,res) => {
-  const id = req.body.id;
-  Comments.findById(id, (err,doc) => {
+app.put('/:id', (req,res) => {
+  Comments.findById(req.params.id, (err,doc) => {
     if(err) {
       console.log("Error");
       return res.send("Error");
@@ -49,9 +51,8 @@ app.post('/update', (req,res) => {
   });
 });
 
-app.post('/delete', (req,res) => {
-  const id = req.body.id;
-  Comments.findByIdAndRemove(id).exec().then(result => res.send(result));
+app.delete('/:id', (req,res) => {
+  Comments.findByIdAndRemove(req.params.id).exec().then(result => res.send(result));
 })
 
 export default app;
