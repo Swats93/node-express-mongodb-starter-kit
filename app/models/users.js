@@ -3,8 +3,9 @@ import {isString} from 'lodash';
 import {isEmail} from 'app/util';
 
 const userSchema = new mongoose.Schema({
-	email: {type: String},
-	password: {type: String},
+	_id: mongoose.Schema.Types.ObjectId,
+	email: {type: String, required: true},
+	password: {type: String, required: true},
 	createdAt: { type: Date, default: Date.now },
 	updatedAt: { type: Date, default: Date.now },
 });
@@ -30,6 +31,6 @@ const userSchema = new mongoose.Schema({
 
 userSchema.path('email').validate(email => isEmail(email), 'Email should be valid.');
 userSchema.path('password').validate(password => isString(password) && password.length > 5,
- 'Password should be a stting and length greater than 5');
+ 'Password should be a string and length greater than 5');
 
 export default mongoose.model('users', userSchema);

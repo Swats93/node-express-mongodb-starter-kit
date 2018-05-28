@@ -1,4 +1,6 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
+import mongoose from 'mongoose';
 
 import users from 'app/models/users';
 import Posts from 'app/models/posts';
@@ -9,7 +11,9 @@ const app = express();
 const {merge} = require('lodash'); 
 
 app.get('/', (req, res) => {
-  users.find().then(doc => res.send(doc));
+  users.find()
+  .select('_id email password')
+  .then(doc => res.send(doc));
 });
 
 app.get('/:id/all', (req, res) => {
@@ -48,17 +52,59 @@ app.get('/:id/all', (req, res) => {
   });
 });
 
+
+// Initial Api for post request
+// app.post('/', (req,res) => {
+//   const user = {
+//     email: req.body.email,
+//     password: req.body.password
+//   };
+//   const data = new users(user);
+//   data.save()
+//   .then(data => res.send(data))
+//   .catch((errors) => {
+//     res.send(errors);
+//   });
+// });
+
 app.post('/', (req,res) => {
-  const user = {
-    email: req.body.email,
-    password: req.body.password
-  };
-  const data = new users(user);
-  data.save()
-  .then(data => res.send(data))
-  .catch((errors) => {
-    res.send(errors);
-  });
+
+  bcrypt.hash(req.body.password, 10, function(err,hash) {
+    if(err) {
+      console.log("Error");
+      return res.status(500).send("Error");
+    }
+    else {
+      const user = {
+        _id: mongoose.Types.ObjectId(),
+        email: req.body.email,
+        password: hash
+      }
+      const data = new users(user);
+      data.save()
+      .then(data => res.send(data))
+      .catch((errors) => res.send(errors))
+    }
+  })
+  // Error: await is a reserved keyword, need to ask Mithu
+  // const user = {
+  //   email: req.body.email,
+  //   password: await new Promise((resolve) => bcrypt.hash(req.body.password, 10, function(err, hash) {
+  //     if(err) {
+  //       console.log("Error");
+  //       return res.status(500).send("Error");
+  //     }
+  //     else {
+  //       resolve(hash);
+  //     }
+  //   })) 
+  // };
+  // const data = new users(user);
+  // data.save()
+  // .then(data => res.send(data))
+  // .catch((errors) => {
+  //   res.send(errors);
+  // });
 });
 
 app.get('/:id', (req,res) => {
@@ -90,12 +136,15 @@ app.put('/:id', (req,res) => {
   });
 });
 
+// Initial Api written for delete request
 // app.delete('/:id', (req,res) => {
 //   users.findByIdAndRemove(req.params.id).exec().then(() => {
 //     Posts.deleteMany({userId:req.params.id}).then(result => res.send(result));
 //   });
 // })
 
+
+// Need to ask Mithu, because it didn't work for comments
 app.delete('/:id', (req, res) => {
   users.findByIdAndRemove(req.params.id).exec().then(() => {
     // if (err) {
@@ -108,13 +157,31 @@ app.delete('/:id', (req, res) => {
         const postIds = postdocs.map(pd => pd.id);
 
         Posts.deleteMany({userId:req.params.id}).then(() => {
-          Comments.deleteMany({
+
+          Comments.remove({
             "fb": {
               postId: {
                 $in: postIds
               }
             }
           }).then(result => res.send(result));
+
+
+          // Comments.remove({ postId: { $in: idsArray } }, function (err) {
+          //   if (err) return callback("Error while deleting " + err.message);
+          //   callback(null, "Some useful message here...");
+          // });
+
+
+          // Comments.deleteMany({
+          //   "fb": {
+          //     postId: {
+          //       $in: postIds
+          //     }
+          //   }
+          // }).then(result => res.send(result));
+
+
         });
 
         // Posts.deleteMany({userId:req.params.id}, () => {

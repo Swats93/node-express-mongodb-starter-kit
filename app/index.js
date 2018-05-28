@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
+import morgan from 'morgan';
 
 import routes from './routes';
 
@@ -17,10 +18,24 @@ db.once('open', function() {
   console.log('Successfully connected to Database!!');
 });
 
+app.use(morgan('dev'));
+
 app.use(routes);
 
-app.get('/', function(req, res) {
-  res.send('Hello World!!');
+app.use((req, res, next) => {
+	const error = new Error("Not Found");
+	error.status = 404;
+	next(error);
+});
+
+// To handle unavailable routes
+app.use((error, req, res, next) => {
+	res.status(error.status || 500);
+	res.json({
+		error: {
+			message: error.message
+		}
+	});
 });
 
 const server = app.listen(8000, () => {

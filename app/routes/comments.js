@@ -1,15 +1,20 @@
 import express from 'express';
+import mongoose from 'mongoose';
 
 import Comments from 'app/models/comments';
 
 const app = express();
 
 app.get('/', (req, res) => {
-  Comments.find().then(doc => res.send(doc));
+  Comments.find()
+  .select('_id postId content')
+  .populate('postId')
+  .then(doc => res.send(doc));
 });
 
 app.post('/', (req,res) => {
   const post = {
+    _id: mongoose.Types.ObjectId(),
   	postId: req.body.postId,
     content: req.body.content
   };
