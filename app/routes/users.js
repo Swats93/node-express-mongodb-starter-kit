@@ -1,6 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
+import multer from 'multer';
 
 import users from 'app/models/users';
 import Posts from 'app/models/posts';
@@ -10,9 +11,29 @@ const app = express();
 
 const {merge} = require('lodash'); 
 
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, './uploads/');
+  },
+  filename: function(req, file, cb) {
+    cb(null, new Date().toISOString() + file.originalname);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    cb(null, true);
+  }
+  else {
+    cb(new Error('File format not accepted, please provide jpeg or png only'), false);
+  }
+};
+
+const upload = multer({storage: storage, fileFilter: fileFilter});
+
 app.get('/', (req, res) => {
   users.find()
-  .select('_id email password')
+  .select('_id email password userImage')
   .then(doc => res.send(doc));
 });
 
@@ -67,7 +88,7 @@ app.get('/:id/all', (req, res) => {
 //   });
 // });
 
-app.post('/', (req,res) => {
+app.post('/', upload.single('userImage'), (req,res) => {
 
   bcrypt.hash(req.body.password, 10, function(err,hash) {
     if(err) {
@@ -75,10 +96,12 @@ app.post('/', (req,res) => {
       return res.status(500).send("Error");
     }
     else {
+      console.log(req.file);
       const user = {
         _id: mongoose.Types.ObjectId(),
         email: req.body.email,
-        password: hash
+        password: hash,
+        userImage: req.file.path
       }
       const data = new users(user);
       data.save()
