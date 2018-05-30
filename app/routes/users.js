@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
 
 import users from 'app/models/users';
 import Posts from 'app/models/posts';
@@ -11,6 +12,7 @@ const app = express();
 
 const {merge} = require('lodash'); 
 
+// To store files in uploads folder and name of the file is Date+OriginalFileName
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, './uploads/');
@@ -20,6 +22,7 @@ const storage = multer.diskStorage({
   }
 });
 
+// To filter the types of uploading files
 const fileFilter = (req, file, cb) => {
   if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
     cb(null, true);
@@ -31,12 +34,15 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({storage: storage, fileFilter: fileFilter});
 
+// To get all users from database
 app.get('/', (req, res) => {
   users.find()
   .select('_id email password userImage')
   .then(doc => res.send(doc));
 });
 
+
+// To get a user by id with all its corresponding posts and comments
 app.get('/:id/all', (req, res) => {
   users.findById(req.params.id, (err, doc) => {
     if (err) {
@@ -90,25 +96,35 @@ app.get('/:id/all', (req, res) => {
 
 app.post('/', upload.single('userImage'), (req,res) => {
 
-  bcrypt.hash(req.body.password, 10, function(err,hash) {
-    if(err) {
-      console.log("Error");
-      return res.status(500).send("Error");
+  users.find({email: req.body.email})
+  .exec()
+  .then(user => {
+    if(user.length >= 1) {
+      return res.status(409).send("User already exists");
     }
     else {
-      console.log(req.file);
-      const user = {
-        _id: mongoose.Types.ObjectId(),
-        email: req.body.email,
-        password: hash,
-        userImage: req.file.path
-      }
-      const data = new users(user);
-      data.save()
-      .then(data => res.send(data))
-      .catch((errors) => res.send(errors))
+      bcrypt.hash(req.body.password, 10, function(err,hash) {
+        if(err) {
+          return res.status(500).send("Error");
+        }
+        else {
+          console.log(req.file);
+          const user = {
+            _id: mongoose.Types.ObjectId(),
+            email: req.body.email,
+            password: hash,
+            //userImage: req.file.path // commented for testing purpose
+          }
+          const data = new users(user);
+          data.save()
+          .then(data => res.send(data))
+          .catch((errors) => res.send(errors))
+        }
+      })
     }
-  })
+  });
+
+  
   // Error: await is a reserved keyword, need to ask Mithu
   // const user = {
   //   email: req.body.email,
@@ -130,11 +146,44 @@ app.post('/', upload.single('userImage'), (req,res) => {
   // });
 });
 
+app.post('/login', (req,res) => {
+  users.find({email: req.body.email})
+    .then(user => {
+      if(user.length < 1) {
+        return res.status(404).send("Invalid user credentials");
+      }
+      else {
+        bcrypt.compare(req.body.password, user[0].password, function(err, result) {
+          if(result) {
+            const token = jwt.sign(
+              {
+                email: user[0].email,
+                userId: user[0]._id
+              },
+              'secret',
+              {
+                expiresIn: "1h"
+              }
+            );
+            return res.status(200).json({
+              message: "User Successfully logged in",
+              token: token
+            });
+          }
+          if(err) {
+            return res.status(404).send("Invalid user credentials");
+          }
+          res.status(404).send("Invalid user credentials");
+        })
+      }
+    })
+    .catch((err) => res.status(500).send("Login Failed"));
+});
+
 app.get('/:id', (req,res) => {
   const id = req.params.id;
   users.findById(id, (err,doc) => {
     if(err) {
-      console.log("Error");
       return res.send("Error");
     }
     else {
