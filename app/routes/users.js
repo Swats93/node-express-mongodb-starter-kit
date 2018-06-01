@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import users from 'app/models/users';
 import Posts from 'app/models/posts';
 import Comments from 'app/models/comments';
+import loggedIn from 'app/middlewares/auth';
 
 const app = express();
 
