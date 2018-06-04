@@ -80,21 +80,6 @@ app.get('/:id/all', (req, res) => {
   });
 });
 
-
-// Initial Api for post request
-// app.post('/', (req,res) => {
-//   const user = {
-//     email: req.body.email,
-//     password: req.body.password
-//   };
-//   const data = new users(user);
-//   data.save()
-//   .then(data => res.send(data))
-//   .catch((errors) => {
-//     res.send(errors);
-//   });
-// });
-
 app.post('/', upload.single('userImage'), (req,res) => {
 
   users.find({email: req.body.email})
@@ -114,7 +99,7 @@ app.post('/', upload.single('userImage'), (req,res) => {
             _id: mongoose.Types.ObjectId(),
             email: req.body.email,
             password: hash,
-            //userImage: req.file.path // commented for testing purpose
+            userImage: req.file.path // commented for testing purpose
           }
           const data = new users(user);
           data.save()
@@ -124,28 +109,30 @@ app.post('/', upload.single('userImage'), (req,res) => {
       })
     }
   });
-
-  
-  // Error: await is a reserved keyword, need to ask Mithu
-  // const user = {
-  //   email: req.body.email,
-  //   password: await new Promise((resolve) => bcrypt.hash(req.body.password, 10, function(err, hash) {
-  //     if(err) {
-  //       console.log("Error");
-  //       return res.status(500).send("Error");
-  //     }
-  //     else {
-  //       resolve(hash);
-  //     }
-  //   })) 
-  // };
-  // const data = new users(user);
-  // data.save()
-  // .then(data => res.send(data))
-  // .catch((errors) => {
-  //   res.send(errors);
-  // });
 });
+
+
+// app.post('/', async (req,res) => {
+//   const user = {
+//     _id: mongoose.Types.ObjectId(),
+//     email: req.body.email,
+//     password: await new Promise((resolve) => bcrypt.hash(req.body.password, 10, function(err, hash) {
+//       if(err) {
+//         console.log("Error");
+//         return res.status(500).send("Error");
+//       }
+//       else {
+//         resolve(hash);
+//       }
+//     })) 
+//   };
+//   const data = new users(user);
+//   data.save()
+//   .then(data => res.send(data))
+//   .catch((errors) => {
+//     res.send(errors);
+//   });
+// });
 
 app.post('/login', (req,res) => {
   users.find({email: req.body.email})

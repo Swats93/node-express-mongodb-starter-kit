@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 import Posts from 'app/models/posts';
 import Comments from 'app/models/comments';
+import {loggedIn} from 'app/middlewares/auth';
 
 const app = express();
 
@@ -13,10 +14,10 @@ app.get('/', (req, res) => {
   .then(doc => res.send(doc));
 });
 
-app.post('/', (req,res) => {
+app.post('/', loggedIn, (req, res) => {
   const post = {
     _id: mongoose.Types.ObjectId(),
-  	userId: req.body.userId,
+  	userId: req.userData.userId,
     title: req.body.title,
     content: req.body.content
   };
@@ -28,7 +29,7 @@ app.post('/', (req,res) => {
   });
 });
 
-app.get('/:id/all', (req,res) => {
+app.get('/:id/all', (req, res) => {
 	Posts.findById(req.params.id, (err,doc) => {
 		if(err) {
 			console.log("Error");
